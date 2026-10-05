@@ -1,138 +1,111 @@
-# Qwen3.8-Flash-Next / Strata GPU-per-Lane Parallel Serving Recipe
+# Independent GPU Lanes — Reproducibility & Experiment Record
 
-**English** | [한국어](README.ko.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+**English** | [한국어](README.ko.md)
 
-A practical recipe for running **one independent Strata generation lane per GPU** while physically sharing one large host-RAM expert arena across lane processes.
+> **Research record, not a deployment recommendation.**
+>
+> This repository preserves the experiments, raw measurements, harnesses, and version provenance behind the Strata-Lanes work. For normal Strata installation and serving, use **[Niko1221/Strata](https://github.com/Niko1221/Strata)**.
 
-**Upstream:** Strata is the inference engine created and maintained by [Niko1221](https://github.com/Niko1221) at [`Niko1221/Strata`](https://github.com/Niko1221/Strata). This repository documents the multi-lane serving and shared-arena extensions built on top of that engine.
+This repository originally documented a practical GPU-per-lane serving setup: one independent Strata engine per GPU, with the large host expert arena physically shared across processes. That architecture remains reproducible, but upstream Strata 0.1.39 changed the performance landscape enough that this repository is now maintained primarily as an **experimental record**.
 
-## Current state
+## Current conclusion
 
-- Implementation fork: [`rhgo1749/Strata-Lanes`](https://github.com/rhgo1749/Strata-Lanes)
-- **Current operational Strata-Lanes pin:** [`48a51d3`](https://github.com/rhgo1749/Strata-Lanes/commit/48a51d33a8436c9504dd24c180aa4fc7adcfdd66)
-- Engine baseline: Strata **0.1.38** (`99f3dbd` upstream); sync record: [`docs/strata-0.1.38-promotion-20261003.md`](docs/strata-0.1.38-promotion-20261003.md)
-- Current promoted text-engine binary SHA256: `a1793a6e3f65dc271f8fa1af6148b374aac7398e431b3f94e40010846049a3bd`
-- Current production quant on the reference host: **Qwen3.8-Flash-Next GSQ-RCO IQ3_S**
-- Production lanes: **RTX 5070 Ti ×3 only**; the RTX 5060 Ti is excluded from the serving pool
-- Lane-local conversation parking: **4096 MiB / 4 slots / 8192 MiB MemAvailable floor per lane**
-`main` tracks the current operational recipe. Detailed retained measurements and version boundaries are in [`RESULTS.md`](RESULTS.md). Older snapshots remain available through Git history and named branches rather than being mirrored on the moving main branch.
+On the reference 3×RTX 5070 Ti host, the current evidence is a **workload-dependent topology crossover**.
 
-## Core architecture
+| Region | Independent lanes | Pipelined layer split |
+| --- | ---: | ---: |
+| M=1 fixed decode | 73.63 ± 1.67 tok/s | **120.62 ± 1.24 tok/s**¹ |
+| M=2 fixed decode | 143.19 ± 3.06 tok/s | **147.84 ± 2.26 tok/s** |
+| M=3 fixed decode | 192.16 ± 4.11 tok/s | **209.66 ± 4.02 tok/s** |
+| three ~15K cold prompts | **5901.34 ± 55.16 tok/s** | 3289.19 ± 18.83 tok/s |
+| three ~110K cold prompts | 5822.71 ± 4.49 tok/s | **6028.09 ± 14.50 tok/s** |
 
-**One active request is processed by one GPU lane. Multiple requests run concurrently on different GPUs. The large expert weights in system RAM are physically shared rather than copied once per process.**
+¹ M=1 is the retained same-binary three-GPU layer-split single-request control; M=2 and M=3 use the exact fixed pipeline configuration.
 
-```mermaid
-flowchart TB
-    C[Clients / agents / OpenAI-compatible API] --> D[Session-aware dispatcher]
-    D -->|session/request A| G0[GPU lane A]
-    D -->|session/request B| G1[GPU lane B]
-    D -->|session/request C| G2[GPU lane C]
-    E[Shared host expert arena] --> G0
-    E --> G1
-    E --> G2
-```
+The evidence no longer supports presenting GPU-per-lane serving as a generally superior or recommended Strata deployment. Independent lanes still have an important medium-length simultaneous cold-prefill advantage and useful isolation properties, while upstream pipelined layer split now wins several decode and very-long-prefill regions.
 
-Lane-local state includes CUDA state, GPU hot-expert cache, GPU-resident KV, host-KV/session state, speculative/MTP state, and the generation loop. The normal production path has no mandatory token-by-token cross-GPU synchronization and does not require NVLink.
+## What this repository is for
 
-## Session-aware scheduler
+The repository preserves:
 
-The first multi-lane supervisor used request-level free-lane/round-robin scheduling. That is fine for independent throughput tests, but it can move a later turn of a long conversation to another GPU even though prompt/KV state is lane-local. On a real long session this caused a later turn to pay a full prompt re-prefill.
+- versioned benchmark contracts;
+- retained raw JSON/JSONL measurements;
+- exact benchmark harnesses and configs;
+- independent-lane scaling evidence;
+- shared expert-arena memory evidence;
+- queue/oversubscription and scheduler experiments;
+- heterogeneous-GPU and interference experiments;
+- conversation-parking experiments;
+- matched independent-lane ↔ upstream layer-split comparisons;
+- paper/revision evidence and provenance.
 
-Current `main` uses **strict session affinity plus balanced-additive new-session placement**. The ordering is explicit:
+It is intended for **reproduction, audit, and future comparison**, not as an install guide for ordinary users.
 
-1. Filter to healthy lanes that satisfy hard capabilities such as vision.
-2. If the request belongs to a known session, use its remembered lane. If that lane is busy, **wait behind that lane instead of spilling to another GPU**.
-3. A completely new session never enters an already-busy lane. If every eligible lane is busy, it waits until a request/stream fully releases a lane.
-4. Among eligible idle lanes, first prefer the lane with the **fewest remembered affinity sessions** so long-lived cache state does not turn one lane into a permanent attractor.
-5. Among equally balanced candidates, minimize **estimated new-prefill bytes + retained last-completed-request bytes**. This is an explicit routing-state proxy, not engine-truth compute cost.
-6. Live-state recency and rotating candidate order remain tie-breakers. `safe-affinity-live-state-v1` remains the explicit rollback policy.
+## Current evidence map
 
-Queued new sessions use **compatible FIFO tickets**: an older compatible waiter gets a newly released lane first, while capability-constrained work such as vision does not block unrelated lanes. A remembered continuation waiting for its lane reserves that lane, so a `notify_all()` wake-up race cannot let a new session steal the cache-rich lane. An empty live state is defined by `live_request_bytes == 0`, not by the absence of an affinity key.
+Start here:
 
-The policy is **hardware-agnostic**: it does not hard-code GPU number, GPU model, or PCIe width. `busy` is request/stream-scoped; affinity is session-scoped. Several session keys may remain mapped to the same engine so Strata can recover older per-engine prompt-cache checkpoints after intervening requests.
+- [RESULTS.md](RESULTS.md) — compact current result plus retained historical generations
+- [0.1.39 topology crossover](docs/strata-0.1.39-performance-crossover-20261005.md)
+- [Benchmark/reporting contract](bench/README.md)
+- [0.1.39 retained raw evidence](bench/raw/0.1.39-20261005/)
+- [Compact 0.1.39 topology table](bench/layer-split-ab-0.1.39-20261005.csv)
 
-### Lane-local conversation parking
+Implementation fork:
 
-Current production additionally enables upstream Strata's native conversation parking on each independent lane. Lanes does not invent a second snapshot format: the supervisor preserves same-lane session affinity and forwards bounded parking settings to each ordinary Strata engine:
+- [rhgo1749/Strata-Lanes](https://github.com/rhgo1749/Strata-Lanes)
 
-```text
---conversation-cache-mib 4096
---conversation-cache-slots 4
---conversation-cache-min-free-mib 8192
-```
+Upstream:
 
-The `slots` value is **parked conversations per lane**, not GPU count or queue depth. Admission is bounded by both the slot cap and the byte budget, so large agent prompts may hit the 4 GiB byte cap before four parked snapshots fit. An engine-side eviction does not invalidate supervisor affinity; a returning session safely falls back to prompt recomputation on that same lane. If only the child engine dies while the private lane wrapper survives, the affinity is retained and the returning request can restart the child before recomputing.
+- [Niko1221/Strata](https://github.com/Niko1221/Strata)
 
-On the reference host, a matched deployment A/B around the standard Lanes supervisor used the same patched binary in both arms. With six stable mixed sessions, cold turn 1 was unchanged (~0.1%), while parking reduced returning-turn wall time by **35.7% / 32.2%**, reduced mean E2E by **28.5% / 25.7%**, and increased aggregate completion throughput by **55.4% / 59.1%** on turns 2 / 3. A follow-up Hermes `eval` live-use run used real named Hermes sessions with ~25K-token prompts; normal revisits reused about **25.1K–25.6K tokens**, and one real byte-budget-driven eviction safely fell back to partial reuse + recompute without losing conversation continuity. See [`docs/lane-local-conversation-parking-20261003.md`](docs/lane-local-conversation-parking-20261003.md).
+## Evidence generations
 
-A production smoke after the fix exercised A → B → C → D → A: A/B/C filled separate lanes, D selected the lane with the smallest live state, and A still returned to its original lane. A separate overload smoke ran 3 active requests plus 4 queued requests, observed `peak_queue_depth=4`, and drained all 7 requests successfully back to `queue_depth=0` with all lanes idle.
+The repository intentionally keeps measurements attached to the engine/source generation that produced them.
 
-This scheduler is **serving hardening for the current lane-local KV architecture, not claimed as the final optimal scheduler**. Cache-aware global scheduling, migration/transfer costs, overload queueing, and more explicit cost models remain roadmap work.
+- **0.1.39** — current topology crossover: M=1/M=2/M=3 decode plus 15K/110K three-request cold-prefill
+- **0.1.38** — full architecture campaign and software-sync gate
+- **0.1.31** — serving-control / lifecycle validation
+- **0.1.30** — retained full architecture matrix
+- older records remain in Git history and named evidence files
+
+Old conclusions are not silently rewritten. When upstream behavior changed, the newer evidence superseded the interpretation while the older raw result remained preserved.
 
 ## Reference host
 
-```text
-CPU                 Ryzen 9 9950X3D, 16C/32T
-RAM                 128 GB DDR5
-GPU lanes           RTX 5070 Ti 16 GB ×3
-PCIe                x8 / x4 / x8
-contexts            262144 / 262144 / 262144
-resident KV         32768 / 32768 / 32768
-VRAM reserve MiB    1200 / 1200 / 1200
-physical CPU cores  5 / 6 / 5
-production vision   one selected lane
-current quant       IQ3_S
-```
+    CPU                 Ryzen 9 9950X3D
+    RAM                 128 GB DDR5
+    primary GPUs        RTX 5070 Ti 16 GB ×3
+    driver              NVIDIA 615.71.09
+    CUDA                13.4
+    model/quant         Qwen3.8-Flash-Next GSQ-RCO IQ3_S
 
-These are **reference-host values, not universal defaults**.
+These are measurement conditions, not portable defaults.
 
-### VRAM reserve caution for mixed vision/text lanes
+## Reproducing historical Lanes experiments
 
-When deriving text-only lanes from a vision-enabled base config, it is correct to remove `--vision` and the encoder configuration, but the VRAM safety margin must not disappear with them. On the reference RTX 5070 Ti 16 GB / IQ3_S / 262K-context / 32768 resident-KV setup, falling back to a 700 MiB reserve left only about **93 MiB** free after load and produced a real `verify: instantiate: out of memory` failure.
+Historical launch/config material remains available:
 
-Production now sets `--lane-vram-reserve-mibs 1200,1200,1200`. A fresh remeasurement left **593 / 592 / 593 MiB** free on GPU0/GPU1/GPU2; three simultaneous public requests all returned HTTP 200, with no new OOM, illegal-memory, or engine-stop event after the new startup. The 1200 MiB value is a **reference-host safety value**, not a universal GPU default. The failure was exposed by mixed-capability lane derivation; it was not caused by the vision encoder consuming VRAM on the text-only GPUs.
+- [docs/USAGE.md](docs/USAGE.md)
+- [recipe/launch-3lane.sh.example](recipe/launch-3lane.sh.example)
 
-A useful host-RAM rule is:
+These are now **reproduction instructions**. They should not be read as a recommendation to prefer Strata-Lanes over upstream Strata.
 
-```text
-required host RAM ≈ one shared expert arena + every lane's host-KV + OS/runtime headroom
-```
+## Paper evidence
 
-## Versioned evidence
+The companion implementation repository uses:
 
-The moving `main` tracks the current **0.1.38 software baseline** and the current **0.1.38 full benchmark campaign**. The 0.1.31 Phase 3 lifecycle record and the 0.1.30 architecture matrix remain retained historical evidence under their original engine generations. Cross-version benchmark claims preserve their prompt/version boundaries rather than relabeling old measurements as current.
+- paper-v1 — submitted v1 state
+- paper-v2-evidence — current post-v1 experimental evidence snapshot
+- paper-v2 — reserved for an actual revised manuscript/submission state
 
-See:
+## Repository status
 
-- [`RESULTS.md`](RESULTS.md) — current summary and retained benchmark evidence
-- [`docs/strata-0.1.38-full-campaign-20261003.md`](docs/strata-0.1.38-full-campaign-20261003.md) — current 0.1.38 full benchmark campaign
-- [`docs/USAGE.md`](docs/USAGE.md) — direct Strata-Lanes launch/client/parking/status usage
-- [`docs/lane-local-conversation-parking-20261003.md`](docs/lane-local-conversation-parking-20261003.md) — deployment parking A/B, Hermes eval validation, and operating contract
-- [`docs/strata-0.1.38-promotion-20261003.md`](docs/strata-0.1.38-promotion-20261003.md) — 0.1.38 software-sync promotion and byte-matched bounded prefill A/B
-- [`docs/strata-0.1.34-promotion-20261002.md`](docs/strata-0.1.34-promotion-20261002.md) — retained 0.1.34 software-sync promotion
-- [`docs/strata-0.1.31-promotion-20261001.md`](docs/strata-0.1.31-promotion-20261001.md) — retained full live/parity evidence
-- [`docs/strata-0.1.30-promotion-20261001.md`](docs/strata-0.1.30-promotion-20261001.md) — retained full benchmark generation
-- [`docs/fork-and-implementation.md`](docs/fork-and-implementation.md) — upstream/fork/recipe ownership boundary
-
-## Direct usage
-
-This recipe launches `serve/multigpu_server.py` directly. Start with [`recipe/launch-3lane.sh.example`](recipe/launch-3lane.sh.example) and follow [`docs/USAGE.md`](docs/USAGE.md) for session IDs, parking controls, status fields, vision lanes and rollback.
-
-## Adapting the recipe
-
-1. Make one normal single-GPU Strata lane work on every GPU first.
-2. Verify VRAM, negotiated PCIe links, RAM headroom, and CPU topology.
-3. Partition physical CPU cores so lane worker pools do not overlap.
-4. Start with conservative context/resident-KV values and validate every lane independently.
-5. Validate multiple concurrent lanes, cold/no-reuse long prompts, streaming/cancellation, lane recovery, and **multi-turn session affinity**.
-6. Treat hardware-specific tuning values as measurements, not portable defaults.
-
-## Related projects
-
-- Upstream Strata: [`Niko1221/Strata`](https://github.com/Niko1221/Strata)
-- Multi-lane implementation fork: [`rhgo1749/Strata-Lanes`](https://github.com/rhgo1749/Strata-Lanes)
-- ExLlamaV3 companion recipe: [`rhgo1749/qwen3.8-flash-next-exllamav3-3x5070ti-recipe`](https://github.com/rhgo1749/qwen3.8-flash-next-exllamav3-3x5070ti-recipe)
+- **Mode:** active experimental record / reproducibility archive
+- **General user recommendation:** upstream Strata
+- **Lanes code and configs:** preserved for reproduction
+- **New work:** evidence-driven comparisons, provenance fixes, and revision support
 
 ## License
 
-Recipe documentation and helper material in this repository are MIT licensed. Strata and model files retain their own licenses.
+Recipe documentation and helper material in this repository are MIT licensed. Strata, model files, and third-party components retain their own licenses.

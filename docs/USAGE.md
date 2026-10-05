@@ -1,6 +1,8 @@
-# Usage — Strata-Lanes 3×GPU recipe
+# Historical reproduction — Strata-Lanes 3×GPU setup
 
-This recipe documents **direct Strata-Lanes serving**.
+> **Research-mode notice:** this document preserves the setup used for Strata-Lanes experiments. It is not a recommendation to deploy this fork instead of upstream Strata for ordinary use. For normal serving, prefer https://github.com/Niko1221/Strata.
+
+This document records **direct Strata-Lanes serving for reproduction**.
 
 The public runtime entry point is:
 

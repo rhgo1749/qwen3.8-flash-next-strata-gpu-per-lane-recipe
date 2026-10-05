@@ -1,5 +1,7 @@
 # Benchmark and reporting contract
 
+> This repository is maintained as an experimental/reproducibility record. These benchmarks document historical and current topology evidence; they are not a deployment recommendation.
+
 ## 0.1.39 promoted topology evidence
 
 The promoted software baseline is Strata **0.1.39** on fork main `aaf843090d9a8239ca91fb9a40adfa337a80ddea`. The compact topology scorecard contains only the measurements needed for the current execution-topology decision:
