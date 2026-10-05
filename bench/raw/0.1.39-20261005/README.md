@@ -1,6 +1,6 @@
 # Strata 0.1.39 retained raw evidence — 2026-10-05
 
-Candidate: `rhgo1749/Strata-Lanes@d51d7e9cbc327f90c2fd59b1e20a949033f594e2`, upstream Strata 0.1.39 `6f32ec070f23ced9f50e704d854d775da52591ab`.
+Measured source: `rhgo1749/Strata-Lanes@d51d7e9cbc327f90c2fd59b1e20a949033f594e2`, upstream Strata 0.1.39 `6f32ec070f23ced9f50e704d854d775da52591ab`. The software baseline was later promoted to fork main `aaf843090d9a8239ca91fb9a40adfa337a80ddea`; raw measurements remain attributed to their measured source.
 
 Only retained/non-contaminated result files are stored here. Initial workload calls duplicated by a tool replay were discarded and are not copied. The private two-engine PSS attempt is not represented as a result because systemd-oomd terminated the DevSpace cgroup while the second private expert arena was being populated.
 

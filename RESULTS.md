@@ -1,8 +1,8 @@
 # Results
 
-## Validated 0.1.39 topology recheck — 2026-10-05
+## Promoted 0.1.39 topology recheck — 2026-10-05
 
-The promoted software baseline remains **0.1.38**. The decision-bearing 0.1.39 candidate evidence is now intentionally compact:
+The promoted software baseline is now **Strata 0.1.39** on fork main `aaf843090d9a8239ca91fb9a40adfa337a80ddea` (software merge `9ae0839b9f376dca9742804924db05902f872ad8`, upstream `6f32ec070f23ced9f50e704d854d775da52591ab`). The topology evidence below was measured on the validated pre-promotion source generation and is intentionally compact:
 
 | Region | Independent lanes | Three-GPU pipelined layer split |
 | --- | ---: | ---: |
@@ -20,9 +20,9 @@ Broader 0.1.39 oversubscription, heterogeneity, workload-sensitivity, memory, FI
 
 Full record: [`docs/strata-0.1.39-performance-crossover-20261005.md`](docs/strata-0.1.39-performance-crossover-20261005.md). Raw evidence: [`bench/raw/0.1.39-20261005/`](bench/raw/0.1.39-20261005/). Compact table: [`bench/layer-split-ab-0.1.39-20261005.csv`](bench/layer-split-ab-0.1.39-20261005.csv).
 
-This repository keeps the current software baseline while preserving measured evidence under the engine generation that produced it.
+This repository keeps the promoted software baseline separate from historical measurements; every benchmark remains labeled with the engine/source generation that produced it.
 
-## Current software baseline — Strata 0.1.38
+## Previous software baseline — Strata 0.1.38 (historical)
 
 ```text
 repository          rhgo1749/Strata-Lanes

@@ -1,8 +1,8 @@
 # Benchmark and reporting contract
 
-## 0.1.39 candidate topology evidence
+## 0.1.39 promoted topology evidence
 
-The promoted baseline remains Strata **0.1.38**. The compact 0.1.39 topology scorecard now contains only the measurements needed for the current execution-topology decision:
+The promoted software baseline is Strata **0.1.39** on fork main `aaf843090d9a8239ca91fb9a40adfa337a80ddea`. The compact topology scorecard contains only the measurements needed for the current execution-topology decision:
 
 - M=1/M=2/M=3 fixed decode concurrency;
 - three-way ~15K cold-prefill common wall;
@@ -19,9 +19,9 @@ Current files:
 - `raw/0.1.39-20261005/` — retained raw/supporting evidence and harnesses;
 - `../docs/strata-0.1.39-performance-crossover-20261005.md` — interpretation and caveats.
 
-The **current operational software baseline** is Strata **0.1.38** on fork main `48a51d33a8436c9504dd24c180aa4fc7adcfdd66`, integrated from upstream `99f3dbd0b21d1401b3769e0c0d963913607f380b` (`v0.1.38`). The retained full 0.1.38 architecture campaign was measured at fork commit `8ea68eaab3ee93f1c820f5103d64ca251cfe52b6`; later serving-control/parking changes do not relabel those benchmark measurements. The full campaign reruns independent-lane scaling, workload sensitivity, corrected mixed serving, exact-queue oversubscription, heterogeneous isolation, private↔shared PSS, and three-GPU layer-split.
+The **previous operational software baseline** was Strata **0.1.38** on fork main `48a51d33a8436c9504dd24c180aa4fc7adcfdd66`, integrated from upstream `99f3dbd0b21d1401b3769e0c0d963913607f380b` (`v0.1.38`). The current promoted software baseline is Strata **0.1.39** on fork main `aaf843090d9a8239ca91fb9a40adfa337a80ddea`. The retained full 0.1.38 architecture campaign was measured at fork commit `8ea68eaab3ee93f1c820f5103d64ca251cfe52b6`; later serving-control/parking changes do not relabel those benchmark measurements. The full campaign reruns independent-lane scaling, workload sensitivity, corrected mixed serving, exact-queue oversubscription, heterogeneous isolation, private↔shared PSS, and three-GPU layer-split.
 
-Current 0.1.38 evidence:
+Retained 0.1.38 historical evidence:
 
 - `strata-0.1.38-campaign.md` — full campaign contract, results, caveats and interpretation;
 - `systems-ablation-0.1.38-20261003.csv` — scaling, mixed serving, heterogeneous isolation and PSS;

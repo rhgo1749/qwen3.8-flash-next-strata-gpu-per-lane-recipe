@@ -2,7 +2,7 @@
 
 ## Status
 
-This is **candidate performance evidence**, not a software-baseline promotion. The promoted recipe baseline remains Strata 0.1.38 until the fork explicitly promotes 0.1.39.
+This evidence now belongs to the **promoted Strata 0.1.39 software baseline**. The measurements themselves were collected on the validated pre-promotion source generation; promotion does not relabel their provenance.
 
 This document is intentionally limited to the measurements that decide the current topology question. Broader 0.1.39 workload, oversubscription, heterogeneous-GPU, memory, FIFO, and batch-only controls remain in `bench/raw/0.1.39-20261005/` for auditability but are not headline architecture benchmarks.
 

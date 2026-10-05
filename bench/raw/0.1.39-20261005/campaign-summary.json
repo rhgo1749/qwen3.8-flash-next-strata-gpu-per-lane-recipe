@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-10-05",
-  "status": "validated sync candidate performance evidence; not promoted baseline",
+  "status": "promoted Strata 0.1.39 software baseline; measurements retained from validated pre-promotion source generation",
   "provenance": {
     "fork": "rhgo1749/Strata-Lanes",
     "fork_branch": "sync/upstream-0.1.39",
@@ -197,5 +197,10 @@
       }
     }
   },
-  "headline_scope": "M1/M2/M3 fixed decode plus 15K/110K three-request cold-prefill crossover. Other retained measurements are supporting controls."
+  "headline_scope": "M1/M2/M3 fixed decode plus 15K/110K three-request cold-prefill crossover. Other retained measurements are supporting controls.",
+  "promotion": {
+    "fork_main": "aaf843090d9a8239ca91fb9a40adfa337a80ddea",
+    "software_merge": "9ae0839b9f376dca9742804924db05902f872ad8",
+    "upstream_commit": "6f32ec070f23ced9f50e704d854d775da52591ab"
+  }
 }
