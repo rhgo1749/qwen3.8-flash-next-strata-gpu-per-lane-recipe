@@ -1,5 +1,17 @@
 # Benchmark and reporting contract
 
+## 0.1.39 candidate performance evidence
+
+The current promoted software baseline remains Strata **0.1.38**, but a bounded 2026-10-05 campaign on the validated **0.1.39 sync candidate** now supplements the retained architecture evidence. It specifically corrects the old assumption that the ordinary layer-split FIFO path represents the concurrent challenger.
+
+Current candidate evidence:
+
+- `layer-split-ab-0.1.39-20261005.csv` — compact independent-lane ↔ FIFO ↔ batch3 ↔ pipelined layer-split comparison;
+- `raw/0.1.39-20261005/` — retained non-contaminated JSONL/JSON, exact configs and harnesses;
+- `../docs/strata-0.1.39-performance-crossover-20261005.md` — provenance, full results, caveats and interpretation.
+
+The strongest upstream-native layer-split challenger uses `--layer-split 18,34 --batch 3 --batch-groups 3 --trim-stage-weights` with a shared expert arena. It measures **209.66 ± 4.02 tok/s** for three fixed decode requests versus **192.16 ± 4.11** for three independent lanes. Cold-prefill behavior crosses by length: ~15K x3 favors lanes (**5901.34 vs 3289.19 tok/s**), while ~110K x3 narrowly favors the pipelined split (**6028.09 vs 5822.71 tok/s**). The PP arms report `cache_n=0`; their unique nonce content is workload/length matched but not byte-identical across topology arms.
+
 The **current operational software baseline** is Strata **0.1.38** on fork main `48a51d33a8436c9504dd24c180aa4fc7adcfdd66`, integrated from upstream `99f3dbd0b21d1401b3769e0c0d963913607f380b` (`v0.1.38`). The retained full 0.1.38 architecture campaign was measured at fork commit `8ea68eaab3ee93f1c820f5103d64ca251cfe52b6`; later serving-control/parking changes do not relabel those benchmark measurements. The full campaign reruns independent-lane scaling, workload sensitivity, corrected mixed serving, exact-queue oversubscription, heterogeneous isolation, private↔shared PSS, and three-GPU layer-split.
 
 Current 0.1.38 evidence:

@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-05",
+  "status": "validated sync candidate performance evidence; not promoted baseline",
+  "provenance": {
+    "fork": "rhgo1749/Strata-Lanes",
+    "fork_branch": "sync/upstream-0.1.39",
+    "fork_commit": "d51d7e9cbc327f90c2fd59b1e20a949033f594e2",
+    "upstream_commit": "6f32ec070f23ced9f50e704d854d775da52591ab",
+    "engine": "0.1.39",
+    "binary_sha256": "9aa71607ca3c322c61e75e2fbbb0cbd8f1816f663c9c856b6df342ecd9e18c05",
+    "model_quant": "Qwen3.8-Flash-Next GSQ-RCO IQ3_S",
+    "cpu": "Ryzen 9 9950X3D",
+    "ram_gib": 128,
+    "gpus": "RTX 5070 Ti 16 GB x3",
+    "driver": "615.71.09",
+    "cuda": "13.4"
+  },
+  "scaling_common_wall_tg": {
+    "lane1": {
+      "mean": 73.63,
+      "sd": 1.67
+    },
+    "lane2": {
+      "mean": 143.19,
+      "sd": 3.06
+    },
+    "lane3": {
+      "mean": 192.16,
+      "sd": 4.11,
+      "speedup_vs_lane1": 2.61,
+      "efficiency_pct": 87
+    },
+    "mixed_3lane": {
+      "mean": 189.25,
+      "sd": 5.07,
+      "n": 9
+    }
+  },
+  "oversubscription_common_wall_tg": {
+    "M3": {
+      "mean": 190.26,
+      "sd": 3.07
+    },
+    "M4": {
+      "mean": 141.55,
+      "sd": 0.9
+    },
+    "M6": {
+      "mean": 191.06,
+      "sd": 2.67
+    },
+    "M9": {
+      "mean": 191.86,
+      "sd": 1.52
+    }
+  },
+  "hetero": {
+    "fast_solo": {
+      "mean": 75.8,
+      "sd": 2.21
+    },
+    "fast_concurrent": {
+      "mean": 75.2375,
+      "sd": 1.5593
+    },
+    "slow_concurrent": {
+      "mean": 59.975,
+      "sd": 1.2279
+    },
+    "aggregate": {
+      "mean": 118.6772,
+      "sd": 2.3488
+    },
+    "fast_delta_pct": -0.7421
+  },
+  "shared_pss_gib": {
+    "matched_32k_8192": 52.1128,
+    "production_262k_32768": 58.0384,
+    "private_0139": null,
+    "private_note": "not retained: second private expert arena triggered systemd-oomd in the DevSpace cgroup"
+  },
+  "layer_split": {
+    "fifo_control": {
+      "single_tg": {
+        "mean": 120.62,
+        "sd": 1.2377
+      },
+      "three_request_aggregate_tg": {
+        "mean": 118.7471,
+        "sd": 5.9757
+      },
+      "short_cold_pp": {
+        "mean": 1047.4465,
+        "sd": 3.2027
+      }
+    },
+    "batch3_shared": {
+      "three_request_aggregate_tg": {
+        "mean": 132.456,
+        "sd": 3.6088
+      }
+    },
+    "pipelined_batch3_groups3_trim_shared": {
+      "split": "18,34",
+      "stages": [
+        "0-17",
+        "18-33",
+        "34-47"
+      ],
+      "three_request_aggregate_tg": {
+        "mean": 209.6617,
+        "sd": 4.0194
+      },
+      "delta_vs_lanes_pct": 9.1079,
+      "confirmed_log": "strata batch (pipelined, 3 groups of 1)"
+    }
+  },
+  "cold_prefill_common_wall": {
+    "short_1p5k_layer_split": {
+      "mean": 1158.2602,
+      "sd": 2.6639,
+      "cache_n": 0
+    },
+    "medium_15k": {
+      "lanes": {
+        "mean": 5901.3365,
+        "sd": 55.1601
+      },
+      "pipelined_layer_split": {
+        "mean": 3289.1903,
+        "sd": 18.8255
+      },
+      "lanes_advantage_pct": 79.4161,
+      "cache_n": 0
+    },
+    "long_110k": {
+      "lanes": {
+        "mean": 5822.7093,
+        "sd": 4.4929
+      },
+      "pipelined_layer_split": {
+        "mean": 6028.0897,
+        "sd": 14.4956
+      },
+      "layer_split_advantage_pct": 3.5272,
+      "cache_n": 0
+    },
+    "caveat": "15K/110K arms are workload/length matched but not byte-identical because the nonce encodes the arm name"
+  },
+  "exclusions": [
+    "initial duplicated workload-client runs caused by tool replay were discarded; only clean retained files are copied",
+    "0.1.39 private two-engine PSS was not retained because systemd-oomd killed the DevSpace cgroup during the second private arena population",
+    "ordinary layer-split FIFO three-request result is a serial control, not the 0.1.39 concurrency ceiling"
+  ]
+}

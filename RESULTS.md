@@ -1,5 +1,23 @@
 # Results
 
+## Validated 0.1.39 candidate performance recheck — 2026-10-05
+
+The promoted software baseline below remains **0.1.38**. A bounded performance recheck was completed on the validated Strata **0.1.39** sync candidate (`Strata-Lanes@d51d7e9`, upstream `6f32ec0`) to test whether upstream batch slots, layer-split pipeline groups and stage-weight trimming changed the earlier architecture crossover.
+
+Key matched 0.1.39 results:
+
+| Region | Independent lanes | Pipelined layer split |
+| --- | ---: | ---: |
+| Three fixed 512-token decode requests | **192.16 ± 4.11 tok/s** | **209.66 ± 4.02 tok/s** |
+| Three ~15K cold prompts | **5901.34 ± 55.16 tok/s** | 3289.19 ± 18.83 tok/s |
+| Three ~110K cold prompts | 5822.71 ± 4.49 tok/s | **6028.09 ± 14.50 tok/s** |
+
+The strongest layer-split arm used explicit split `18,34`, `--batch 3 --batch-groups 3 --trim-stage-weights`, and the shared expert arena; the engine confirmed `strata batch (pipelined, 3 groups of 1)`. The ordinary layer-split FIFO three-request result (**118.75 ± 5.98 tok/s**) is retained only as a serial control and must not be treated as the 0.1.39 concurrency ceiling.
+
+The cold PP arms all reported `cache_n=0`. The 15K/110K A/Bs are workload/length matched but not byte-identical because the unique nonce encoded the arm name. The result is therefore a **workload-dependent crossover**, not a universal topology winner or a production promotion.
+
+Full record: [`docs/strata-0.1.39-performance-crossover-20261005.md`](docs/strata-0.1.39-performance-crossover-20261005.md). Machine-readable/raw evidence: [`bench/raw/0.1.39-20261005/`](bench/raw/0.1.39-20261005/). Compact A/B table: [`bench/layer-split-ab-0.1.39-20261005.csv`](bench/layer-split-ab-0.1.39-20261005.csv).
+
 This repository keeps the current software baseline while preserving measured evidence under the engine generation that produced it.
 
 ## Current software baseline — Strata 0.1.38

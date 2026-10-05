@@ -1,0 +1,9 @@
+metric,arm,mean_tok_s,sd_tok_s,notes
+tg_3req,lanes_1plus1plus1,192.16,4.11,matched fixed 1469-token reasoning prompt; 512 output
+tg_3req,layer_split_fifo,118.7471,5.9757,serial FIFO control only
+tg_3req,layer_split_batch3_shared,132.4560,3.6088,batch slots; no pipeline groups
+tg_3req,layer_split_batch3_groups3_trim_shared,209.6617,4.0194,explicit split 18,34; pipelined 3 groups of 1
+pp_15k_x3,lanes_1plus1plus1,5901.3365,55.1601,cold no-reuse; cache_n=0
+pp_15k_x3,layer_split_batch3_groups3_trim_shared,3289.1903,18.8255,cold no-reuse; cache_n=0
+pp_110k_x3,lanes_1plus1plus1,5822.7093,4.4929,cold no-reuse; cache_n=0
+pp_110k_x3,layer_split_batch3_groups3_trim_shared,6028.0897,14.4956,cold no-reuse; cache_n=0
