@@ -5,6 +5,8 @@
 > **연구 기록용 저장소이며 일반 사용을 위한 배포 권장안이 아니다.**
 >
 > 이 저장소는 Strata-Lanes 연구 과정의 실험, 원시 측정값, 벤치 하네스, 버전 provenance를 보존한다. 일반적인 Strata 설치와 서빙에는 **[Niko1221/Strata](https://github.com/Niko1221/Strata)** 사용을 권장한다.
+>
+> ✅ 이 연구의 일부는 upstream에 채택됐습니다: `--shared-expert-arena`가 [Strata v0.1.30](https://github.com/Niko1221/Strata/releases/tag/v0.1.30)에 릴리스됨.
 
 이 저장소는 원래 GPU마다 독립 Strata 엔진 하나를 두고 큰 host expert arena만 프로세스 사이에서 물리적으로 공유하는 GPU-per-lane 서빙 구성을 실사용 레시피 형태로 정리했다.
 
