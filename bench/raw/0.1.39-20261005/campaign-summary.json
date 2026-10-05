@@ -152,5 +152,50 @@
     "initial duplicated workload-client runs caused by tool replay were discarded; only clean retained files are copied",
     "0.1.39 private two-engine PSS was not retained because systemd-oomd killed the DevSpace cgroup during the second private arena population",
     "ordinary layer-split FIFO three-request result is a serial control, not the 0.1.39 concurrency ceiling"
-  ]
+  ],
+  "topology_scorecard": {
+    "decode": {
+      "M1": {
+        "lanes_mean": 73.63263915276818,
+        "lanes_sd": 1.667997433483915,
+        "layer_split_mean": 120.62,
+        "layer_split_sd": 1.2377,
+        "layer_split_delta_pct": 63.8132,
+        "caveat": "M1 layer-split is retained same-binary single-request control; exact pipeline config not rerun"
+      },
+      "M2": {
+        "lanes_mean": 143.19034595314514,
+        "lanes_sd": 3.0641807451873775,
+        "layer_split_mean": 147.84109432389172,
+        "layer_split_sd": 2.257456374674615,
+        "layer_split_delta_pct": 3.24795,
+        "config": "18,34; batch3; groups3; trim-stage-weights; shared arena"
+      },
+      "M3": {
+        "lanes_mean": 192.1581461173138,
+        "lanes_sd": 4.112084956078617,
+        "layer_split_mean": 209.66168367371748,
+        "layer_split_sd": 4.019392082971881,
+        "layer_split_delta_pct": 9.10892,
+        "config": "18,34; batch3; groups3; trim-stage-weights; shared arena"
+      }
+    },
+    "cold_prefill": {
+      "15k_x3": {
+        "lanes_mean": 5901.336454165013,
+        "lanes_sd": 55.16006107998603,
+        "layer_split_mean": 3289.190332307929,
+        "layer_split_sd": 18.825530939298392,
+        "winner": "lanes"
+      },
+      "110k_x3": {
+        "lanes_mean": 5822.709290127484,
+        "lanes_sd": 4.492857293433785,
+        "layer_split_mean": 6028.089711818304,
+        "layer_split_sd": 14.495592528828167,
+        "winner": "layer_split"
+      }
+    }
+  },
+  "headline_scope": "M1/M2/M3 fixed decode plus 15K/110K three-request cold-prefill crossover. Other retained measurements are supporting controls."
 }

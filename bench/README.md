@@ -1,16 +1,23 @@
 # Benchmark and reporting contract
 
-## 0.1.39 candidate performance evidence
+## 0.1.39 candidate topology evidence
 
-The current promoted software baseline remains Strata **0.1.38**, but a bounded 2026-10-05 campaign on the validated **0.1.39 sync candidate** now supplements the retained architecture evidence. It specifically corrects the old assumption that the ordinary layer-split FIFO path represents the concurrent challenger.
+The promoted baseline remains Strata **0.1.38**. The compact 0.1.39 topology scorecard now contains only the measurements needed for the current execution-topology decision:
 
-Current candidate evidence:
+- M=1/M=2/M=3 fixed decode concurrency;
+- three-way ~15K cold-prefill common wall;
+- three-way ~110K cold-prefill common wall.
 
-- `layer-split-ab-0.1.39-20261005.csv` — compact independent-lane ↔ FIFO ↔ batch3 ↔ pipelined layer-split comparison;
-- `raw/0.1.39-20261005/` — retained non-contaminated JSONL/JSON, exact configs and harnesses;
-- `../docs/strata-0.1.39-performance-crossover-20261005.md` — provenance, full results, caveats and interpretation.
+M=2 closes the missing decode point: independent lanes measure **143.19 ± 3.06 tok/s**, while the fixed pipelined three-GPU layer-split server measures **147.84 ± 2.26 tok/s**. M=3 is **192.16 ± 4.11 vs 209.66 ± 4.02 tok/s**. The layer-split config is explicit `18,34`, `--batch 3 --batch-groups 3 --trim-stage-weights`, with the shared expert arena.
 
-The strongest upstream-native layer-split challenger uses `--layer-split 18,34 --batch 3 --batch-groups 3 --trim-stage-weights` with a shared expert arena. It measures **209.66 ± 4.02 tok/s** for three fixed decode requests versus **192.16 ± 4.11** for three independent lanes. Cold-prefill behavior crosses by length: ~15K x3 favors lanes (**5901.34 vs 3289.19 tok/s**), while ~110K x3 narrowly favors the pipelined split (**6028.09 vs 5822.71 tok/s**). The PP arms report `cache_n=0`; their unique nonce content is workload/length matched but not byte-identical across topology arms.
+Cold PP still shows the important workload-length crossover: ~15K x3 is **5901.34 vs 3289.19 tok/s** in favor of lanes; ~110K x3 is **5822.71 vs 6028.09 tok/s** in favor of layer split. All retained PP requests report `cache_n=0`.
+
+FIFO, batch-only, oversubscription, heterogeneous-isolation, broad workload-sensitivity and PSS probes remain under `raw/0.1.39-20261005/` as supporting controls, not headline benchmarks.
+
+Current files:
+- `layer-split-ab-0.1.39-20261005.csv` — compact topology scorecard;
+- `raw/0.1.39-20261005/` — retained raw/supporting evidence and harnesses;
+- `../docs/strata-0.1.39-performance-crossover-20261005.md` — interpretation and caveats.
 
 The **current operational software baseline** is Strata **0.1.38** on fork main `48a51d33a8436c9504dd24c180aa4fc7adcfdd66`, integrated from upstream `99f3dbd0b21d1401b3769e0c0d963913607f380b` (`v0.1.38`). The retained full 0.1.38 architecture campaign was measured at fork commit `8ea68eaab3ee93f1c820f5103d64ca251cfe52b6`; later serving-control/parking changes do not relabel those benchmark measurements. The full campaign reruns independent-lane scaling, workload sensitivity, corrected mixed serving, exact-queue oversubscription, heterogeneous isolation, private↔shared PSS, and three-GPU layer-split.
 

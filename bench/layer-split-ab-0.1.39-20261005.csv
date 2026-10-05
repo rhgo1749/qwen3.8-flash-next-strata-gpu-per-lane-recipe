@@ -1,9 +1,6 @@
-metric,arm,mean_tok_s,sd_tok_s,notes
-tg_3req,lanes_1plus1plus1,192.16,4.11,matched fixed 1469-token reasoning prompt; 512 output
-tg_3req,layer_split_fifo,118.7471,5.9757,serial FIFO control only
-tg_3req,layer_split_batch3_shared,132.4560,3.6088,batch slots; no pipeline groups
-tg_3req,layer_split_batch3_groups3_trim_shared,209.6617,4.0194,explicit split 18,34; pipelined 3 groups of 1
-pp_15k_x3,lanes_1plus1plus1,5901.3365,55.1601,cold no-reuse; cache_n=0
-pp_15k_x3,layer_split_batch3_groups3_trim_shared,3289.1903,18.8255,cold no-reuse; cache_n=0
-pp_110k_x3,lanes_1plus1plus1,5822.7093,4.4929,cold no-reuse; cache_n=0
-pp_110k_x3,layer_split_batch3_groups3_trim_shared,6028.0897,14.4956,cold no-reuse; cache_n=0
+metric,concurrency,independent_lanes_mean,independent_lanes_sd,layer_split_mean,layer_split_sd,layer_split_delta_pct,notes
+decode_tg,1,73.6326,1.6680,120.6200,1.2377,63.81,layer-split M1 is retained same-binary single-request control; exact pipeline config not rerun
+decode_tg,2,143.1903,3.0642,147.8411,2.2575,3.25,exact fixed 18,34 batch3 groups3 trim shared config
+decode_tg,3,192.1581,4.1121,209.6617,4.0194,9.11,exact fixed 18,34 batch3 groups3 trim shared config
+cold_pp_15k_x3,3,5901.3365,55.1601,3289.1903,18.8255,-44.27,cache_n=0; layer split is 44.27% below lanes
+cold_pp_110k_x3,3,5822.7093,4.4929,6028.0897,14.4956,3.53,cache_n=0
