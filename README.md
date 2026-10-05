@@ -5,6 +5,8 @@
 > **Research record, not a deployment recommendation.**
 >
 > This repository preserves the experiments, raw measurements, harnesses, and version provenance behind the Strata-Lanes work. For normal Strata installation and serving, use **[Niko1221/Strata](https://github.com/Niko1221/Strata)**.
+>
+> ✅ Part of this research was adopted upstream: `--shared-expert-arena` shipped in [Strata v0.1.30](https://github.com/Niko1221/Strata/releases/tag/v0.1.30).
 
 This repository originally documented a practical GPU-per-lane serving setup: one independent Strata engine per GPU, with the large host expert arena physically shared across processes. That architecture remains reproducible, but upstream Strata 0.1.39 changed the performance landscape enough that this repository is now maintained primarily as an **experimental record**.
 
